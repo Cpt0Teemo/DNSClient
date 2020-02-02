@@ -14,7 +14,6 @@ class DnsClient{
     }
     
     Iterator<String> arguments = Arrays.stream(args).iterator();
-    arguments.next();
         
     DnsRequest request = new DnsRequest(arguments);
     

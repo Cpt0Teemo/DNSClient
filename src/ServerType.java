@@ -1,5 +1,5 @@
 
-    public enum ServerName{
+    public enum ServerType {
         IP,
         MX,
         NS
