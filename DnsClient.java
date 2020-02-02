@@ -1,17 +1,23 @@
-import java.util;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 class DnsClient{
 
   public static void main(String[] args) {
     int sizeOfOptions = args.length;
 
-    // Comamnd line input requires minimum 2 variables maximum 10 variables
+    // Command line input requires minimum 2 variables maximum 10 variables
     if(sizeOfOptions < 2 || sizeOfOptions > 10){
-      System.out.println("Incorrect number of inputs...");
+      System.out.println("ERROR: Incorrect number of inputs...");
       System.exit(0);
     }
-    List<String> arguments = Arrays.asList(args);
-    DnsRequest request = new DnsRequest(asd);
-
+    
+    Iterator<String> arguments = Arrays.stream(args).iterator();
+    arguments.next();
+        
+    DnsRequest request = new DnsRequest(arguments);
+    
+    
   }
 }
