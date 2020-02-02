@@ -1,6 +1,6 @@
 
     public enum ServerType {
-        IP,
+        A,
         MX,
         NS
     }

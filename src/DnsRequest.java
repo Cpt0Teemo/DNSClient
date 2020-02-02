@@ -5,7 +5,7 @@ class DnsRequest
   int timeout = 5;
   int max_retries = 3;
   int port = 53;
-  ServerType serverType = ServerType.IP;
+  ServerType serverType = ServerType.A;
   String serverIp;
   String domainName;
   
@@ -17,16 +17,15 @@ class DnsRequest
       parser();
     }catch (Exception e)
     {
-      System.out.println("Failed");
+      System.out.println(e.getMessage());
       return;
     }
 
-    System.out.println("" + this.timeout + this.max_retries + this.port + this.serverType + this.serverIp + this.domainName);
+    displayInformation();
   }
 
-  public void parser()git
+  public void parser() throws Exception
   {
-    String value;
     String key;
     
     while(requestFlags.hasNext())
@@ -44,13 +43,11 @@ class DnsRequest
       if(getServerIp(key))
         return;
 
-      System.out.println("ERROR: The value " + key + " is not accepted...");
-      break;
+      throw new Exception("ERROR: The value " + key + " is not accepted...");
     }    
   }
 
-  private boolean extractIntFlag(String key, String flag)
-  {
+  private boolean extractIntFlag(String key, String flag) throws Exception {
     if(key.compareTo(flag) == 0) {
 
       if(requestFlags.hasNext()) {
@@ -66,10 +63,10 @@ class DnsRequest
           return true;
 
         } catch (Exception e){
-          System.out.println("ERROR: Incorrect " + flag + " value...");
+          throw new Exception("ERROR: Incorrect " + flag + " value...");
         }
       } else {
-        System.out.println("ERROR: Incorrect syntax to " + flag + "...");
+        throw new Exception("ERROR: Incorrect syntax to " + flag + "...");
       }
     }
     return false;
@@ -88,14 +85,13 @@ class DnsRequest
     return false;
   }
 
-  private boolean getServerIp(String key)
-  {
+  private boolean getServerIp(String key) throws Exception {
     if(key.charAt(0) != '@') return false;
 
     key = key.substring(1);
     String regex = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     if(!key.matches(regex))
-      System.out.println("ERROR: Incorrect syntax for IP address");
+      throw new Exception("ERROR: Incorrect syntax for IP address");
 
     this.serverIp = key;
 
@@ -103,5 +99,12 @@ class DnsRequest
     this.domainName = requestFlags.next();
 
     return true;
+  }
+
+  private void displayInformation()
+  {
+    System.out.println("DnsClient sending request for " + this.domainName);
+    System.out.println("Server: " + this.serverIp);
+    System.out.println("Request type: " + this.serverType.toString());
   }
 }
