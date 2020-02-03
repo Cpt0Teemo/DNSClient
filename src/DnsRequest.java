@@ -2,14 +2,46 @@ import java.util.Iterator;
 
 class DnsRequest
 {
-  int timeout = 5;
-  int max_retries = 3;
-  int port = 53;
-  ServerType serverType = ServerType.A;
-  String serverIp;
-  String domainName;
+  private int timeout = 5;
+  private int max_retries = 3;
+  private int port = 53;
+  private ServerType serverType = ServerType.A;
+  private String serverIp;
+  private String domainName;
+
+  public int getTimeout() {
+    return timeout;
+  }
+
+  public int getMax_retries() {
+    return max_retries;
+  }
+
+  public int getPort() {
+    return port;
+  }
+
+  public ServerType getServerType() {
+    return serverType;
+  }
+
+  public String getServerIp() {
+    return serverIp;
+  }
+
+  public byte[] getServerIpBytes() {
+    byte[] ip = new byte[4];
+    String[] bytes = this.serverIp.split("\\.");
+    for(int i = 0; i<4; i++)
+      ip[i] = Byte.parseByte(bytes[i]);
+    return ip;
+  }
+
+  public String getDomainName() {
+    return domainName;
+  }
   
-  Iterator<String> requestFlags;
+  private Iterator<String> requestFlags;
 
   public DnsRequest(Iterator<String> options){
     this.requestFlags = options;
