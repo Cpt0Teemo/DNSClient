@@ -1,3 +1,7 @@
+import jdk.jfr.Unsigned;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.Iterator;
 
 class DnsRequest
@@ -33,7 +37,7 @@ class DnsRequest
     byte[] ip = new byte[4];
     String[] bytes = this.serverIp.split("\\.");
     for(int i = 0; i<4; i++)
-      ip[i] = Byte.parseByte(bytes[i]);
+      ip[i] = (byte) Integer.parseInt(bytes[i]);
     return ip;
   }
 
@@ -79,7 +83,8 @@ class DnsRequest
     }    
   }
 
-  private boolean extractIntFlag(String key, String flag) throws Exception {
+  private boolean extractIntFlag(String key, String flag) throws Exception
+  {
     if(key.compareTo(flag) == 0) {
 
       if(requestFlags.hasNext()) {
@@ -117,7 +122,8 @@ class DnsRequest
     return false;
   }
 
-  private boolean getServerIp(String key) throws Exception {
+  private boolean getServerIp(String key) throws Exception
+  {
     if(key.charAt(0) != '@') return false;
 
     key = key.substring(1);
@@ -139,4 +145,67 @@ class DnsRequest
     System.out.println("Server: " + this.serverIp);
     System.out.println("Request type: " + this.serverType.toString());
   }
+
+  public byte[] createDnsRequest() throws Exception
+  {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(baos);
+    addDnsHeader(dos);
+    addDnsBody(dos);
+    return baos.toByteArray();
+  }
+
+  private DataOutputStream addDnsHeader(DataOutputStream dos) throws Exception
+  {
+    int id = (int) (Math.random() * 65535);
+    //ID
+    dos.writeShort(Integer.valueOf(String.valueOf(id), 16));
+    //Query and recursive set to true
+    dos.writeShort(0x0100);
+    //QDCOUNT
+    dos.writeShort(0x0001);
+    //ANCOUNT
+    dos.writeShort(0x0000);
+    //NSCOUNT
+    dos.writeShort(0x0000);
+    //ARCOUNT
+    dos.writeShort(0x0000);
+    return dos;
+  }
+
+  private DataOutputStream addDnsBody(DataOutputStream dos) throws Exception
+  {
+    //Add domain name
+    String[] labels = this.domainName.split("\\.");
+    for (String label: labels)
+    {
+      dos.writeByte(label.length());
+      for (char character: label.toCharArray())
+      {
+        dos.writeByte(character);
+      }
+    }
+    //Mark the end of the labels
+    dos.writeByte(0x00);
+
+    //QTYPE
+    switch (this.serverType)
+    {
+      case A:
+        dos.writeShort(0x0001);
+        break;
+      case MX:
+        dos.writeShort(0x000f);
+        break;
+      case NS:
+        dos.writeShort(0x0002);
+        break;
+    }
+
+    //QCLASS
+    dos.writeShort(0x0001);
+
+    return dos;
+  }
+
 }
