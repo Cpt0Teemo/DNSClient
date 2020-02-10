@@ -2,5 +2,6 @@
     public enum ServerType {
         A,
         MX,
-        NS
+        NS,
+        CNAME
     }

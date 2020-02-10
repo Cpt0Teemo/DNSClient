@@ -45,9 +45,9 @@ class DnsClient{
 
       clientSocket.receive(receivePacket);
 
-      String modifiedSentence = new String(receivePacket.getData());
+      var response = new DnsResponse(receivePacket.getData());
 
-      System.out.println("FROM SERVER: " + modifiedSentence);
+      System.out.println("FROM SERVER: " );
       clientSocket.close();
     }catch(Exception e)
     {

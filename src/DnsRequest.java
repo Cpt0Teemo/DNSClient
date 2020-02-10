@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 class DnsRequest
 {
+  private int id;
   private int timeout = 5;
   private int max_retries = 3;
   private int port = 53;
@@ -157,9 +158,9 @@ class DnsRequest
 
   private DataOutputStream addDnsHeader(DataOutputStream dos) throws Exception
   {
-    int id = (int) (Math.random() * 65535);
+    this.id = (int) (Math.random() * 65535);
     //ID
-    dos.writeShort(Integer.valueOf(String.valueOf(id), 16));
+    dos.writeShort(Integer.valueOf(String.valueOf(this.id), 16));
     //Query and recursive set to true
     dos.writeShort(0x0100);
     //QDCOUNT
@@ -176,6 +177,7 @@ class DnsRequest
   private DataOutputStream addDnsBody(DataOutputStream dos) throws Exception
   {
     //Add domain name
+    //TODO think of offset
     String[] labels = this.domainName.split("\\.");
     for (String label: labels)
     {
