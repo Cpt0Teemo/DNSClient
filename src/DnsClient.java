@@ -1,5 +1,3 @@
-import javax.xml.crypto.Data;
-import java.io.BufferedReader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.net.*;
@@ -36,18 +34,14 @@ class DnsClient{
 
       clientSocket.send(sendPacket);
 
-      System.out.println("Sending: " + sendData.length + " bytes");
-      for (int i = 0; i< sendData.length; i++) {
-        System.out.print("0x" + String.format("%x", sendData[i]) + " " );
-      }
-
       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 
       clientSocket.receive(receivePacket);
 
       var response = new DnsResponse(receivePacket.getData());
+      var truth = response.checkResponseWithRequest(request);
 
-      System.out.println("FROM SERVER: " );
+      System.out.println("FROM SERVER: " + truth );
       clientSocket.close();
     }catch(Exception e)
     {

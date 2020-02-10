@@ -5,7 +5,7 @@ public class DnsResponse {
     private int id;
     private boolean isAuthoritative = false;
     private List<String> labels = new ArrayList<>();
-    private List<String> responselabels = new ArrayList<>();
+    private List<String> responseDomainLabels = new ArrayList<>();
     private ServerType responseType;
     private List<String> ip = new ArrayList<>();
 
@@ -14,8 +14,9 @@ public class DnsResponse {
         parseData(data);
     }
 
-    private void parseHeader(byte[] data) throws Exception {
-        this.id = (data[0] << 8)  + data[1];
+    private void parseHeader(byte[] data) throws Exception
+    {
+        this.id = readIntByte(data, 0, 2);
         //Check is response
         if(!checkBitAtPosition(1 ,data[2]))
             throw new Exception();
@@ -47,7 +48,7 @@ public class DnsResponse {
         if(data[++index] != 0 || data[++index] != 1)
             throw new Exception();
 
-        index = getLabels(data, ++index, this.responselabels);
+        index = getLabels(data, ++index, this.responseDomainLabels);
         index += 2;
         getType(data[index]);
 
@@ -96,7 +97,8 @@ public class DnsResponse {
         }
     }
 
-    private int getLabels(byte[] data, int index, List<String> labels) {
+    private int getLabels(byte[] data, int index, List<String> labels)
+    {
         int labelLength = 0;
         String label;
 
@@ -123,8 +125,8 @@ public class DnsResponse {
         return index;
     }
 
-
-    private void getType(byte datum) throws Exception {
+    private void getType(byte datum) throws Exception
+    {
         switch (datum)
         {
             case 1:
@@ -155,4 +157,15 @@ public class DnsResponse {
         return false;
     }
 
+    public boolean checkResponseWithRequest(DnsRequest request)
+    {
+    if( this.id != request.getId() )
+        return false;
+    if( this.responseType != request.getServerType() )
+        return false;
+    if( !String.join(".", this.responseDomainLabels).equals(request.getDomainName()) )
+        return false;
+
+    return true;
+    }
 }

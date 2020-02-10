@@ -1,18 +1,19 @@
-import jdk.jfr.Unsigned;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.util.Iterator;
 
 class DnsRequest
 {
+
   private int id;
   private int timeout = 5;
   private int max_retries = 3;
   private int port = 53;
   private ServerType serverType = ServerType.A;
-  private String serverIp;
+  private String dnsServerIp;
   private String domainName;
+
+  public int getId() { return id; }
 
   public int getTimeout() {
     return timeout;
@@ -30,13 +31,9 @@ class DnsRequest
     return serverType;
   }
 
-  public String getServerIp() {
-    return serverIp;
-  }
-
   public byte[] getServerIpBytes() {
     byte[] ip = new byte[4];
-    String[] bytes = this.serverIp.split("\\.");
+    String[] bytes = this.dnsServerIp.split("\\.");
     for(int i = 0; i<4; i++)
       ip[i] = (byte) Integer.parseInt(bytes[i]);
     return ip;
@@ -132,7 +129,7 @@ class DnsRequest
     if(!key.matches(regex))
       throw new Exception("ERROR: Incorrect syntax for IP address");
 
-    this.serverIp = key;
+    this.dnsServerIp = key;
 
     //TODO Check if valid domain name
     this.domainName = requestFlags.next();
@@ -143,7 +140,7 @@ class DnsRequest
   private void displayInformation()
   {
     System.out.println("DnsClient sending request for " + this.domainName);
-    System.out.println("Server: " + this.serverIp);
+    System.out.println("Server: " + this.dnsServerIp);
     System.out.println("Request type: " + this.serverType.toString());
   }
 
@@ -160,7 +157,8 @@ class DnsRequest
   {
     this.id = (int) (Math.random() * 65535);
     //ID
-    dos.writeShort(Integer.valueOf(String.valueOf(this.id), 16));
+    dos.writeByte((this.id >> 8) & 0xFF );
+    dos.writeByte( this.id & 0xFF);
     //Query and recursive set to true
     dos.writeShort(0x0100);
     //QDCOUNT
