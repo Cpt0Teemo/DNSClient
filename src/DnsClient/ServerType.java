@@ -1,5 +1,6 @@
+package DnsClient;
 
-    public enum ServerType {
+public enum ServerType {
         A,
         MX,
         NS,

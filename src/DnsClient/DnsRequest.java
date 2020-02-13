@@ -1,3 +1,5 @@
+package DnsClient;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.util.Iterator;
@@ -88,11 +90,11 @@ class DnsRequest
       if(requestFlags.hasNext()) {
 
         try {
-          if(flag.compareTo("-t") == 0)
+          if(flag.toLowerCase().compareTo("-t") == 0)
             this.timeout = Integer.parseInt(requestFlags.next());
-          if(flag.compareTo("-r") == 0)
+          if(flag.toLowerCase().compareTo("-r") == 0)
             this.max_retries = Integer.parseInt(requestFlags.next());
-          if(flag.compareTo("-p") == 0)
+          if(flag.toLowerCase().compareTo("-p") == 0)
             this.port = Integer.parseInt(requestFlags.next());
 
           return true;
@@ -109,11 +111,11 @@ class DnsRequest
 
   private boolean getServerType(String key)
   {
-    if(key.compareTo("-MX") == 0) {
+    if(key.toUpperCase().compareTo("-MX") == 0) {
       this.serverType = ServerType.MX;
       return true;
     }
-    else if(key.compareTo("-NS") == 0) {
+    else if(key.toUpperCase().compareTo("-NS") == 0) {
       this.serverType = ServerType.NS;
       return true;
     }

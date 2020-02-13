@@ -1,3 +1,5 @@
+package DnsClient;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.net.*;
@@ -33,6 +35,7 @@ class DnsClient{
     catch (Exception e)
     {
       System.out.println(e.getMessage());
+      return;
     }
 
     var retries = request.getMax_retries();
@@ -51,16 +54,19 @@ class DnsClient{
 
         clientSocket.receive(receivePacket);
 
-
         var response = new DnsResponse(receivePacket.getData());
-        var truth = response.checkResponseWithRequest(request);
 
-        System.out.println("FROM SERVER: " + truth);
+
+        if(!response.checkResponseWithRequest(request))
+          throw new Exception("Response does not match request");
+
+        System.out.println(response.displayInformation());
         clientSocket.close();
         break;
       } catch (Exception e) {
-        System.out.println(e.getMessage());
         retries--;
+        if(retries == 0)
+          System.out.println(e.getMessage());
       } finally {
         if (clientSocket != null && !clientSocket.isClosed()) clientSocket.close();
       }
