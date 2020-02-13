@@ -1,5 +1,3 @@
-package DnsClient;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,19 +5,11 @@ public class DnsResponse {
     private int id;
     private boolean isAuthoritative = false;
     private List<String> labels = new ArrayList<>();
-    private List<String> responseDomainLabels = new ArrayList<>();
-    private ServerType responseType;
+    private ServerType questionType;
     private int ansCount = 0;
-    private List<Integer> TTl = new ArrayList<Integer>();
-    //Type A
-    private List<List<String>> ip = new ArrayList<>();
-    //Type MX
-    private List<Integer> preference = new ArrayList<>();
-    private List<List<String>> mxDomainLabels = new ArrayList<>();
-    //Type NS
-    private List<List<String>> nsDomainLabels = new ArrayList<>();
-    //Type CNAME
-    private List<List<String>> cnameDomainLabels = new ArrayList<>();
+    private int authCount = 0;
+    private int additionalCount = 0;
+    private List<Response> responses = new ArrayList<>();
 
 
 
@@ -38,8 +28,8 @@ public class DnsResponse {
         if(checkBitAtPosition(6 ,data[2]))
             this.isAuthoritative = true;
         //Check is serve handles recursive queries
-        if(!checkBitAtPosition(1 ,data[3]))
-            throw new DnsResponseException("ERROR: Server does not handle recursive calls");
+        //if(!checkBitAtPosition(1 ,data[3]))
+            //throw new DnsResponseException("ERROR: Server does not handle recursive calls");
         //Check response status code
         int response = data[3] & 8;
         if(response != 0)
@@ -64,6 +54,10 @@ public class DnsResponse {
 
         //Read number of answers
         this.ansCount = readIntByte(data, 6, 2);
+        //Read number of authority answers
+        this.authCount = readIntByte(data, 8, 2);
+        //Read number of addition record
+        this.additionalCount = readIntByte(data, 10, 2);
 
     }
 
@@ -73,54 +67,70 @@ public class DnsResponse {
         index = getLabels(data, index, this.labels);
         //Check type
         index += 2;
-        getType(data[index]);
+        this.questionType = getType(data[index]);
         //Check class
         if(data[++index] != 0 || data[++index] != 1)
-            throw new DnsResponseException("ERROR: Response class is not");
+            throw new DnsResponseException("ERROR: Query class is not IN");
 
         for(int i = 0; i < this.ansCount; i++)
-            index = parseResponse(data, index, i);
+        {
+            Response response = new Response();
+            this.responses.add(response);
+            index = parseResponse(data, index, response);
+        }
+        for(int i = 0; i < this.authCount; i++)
+        {
+            Response response = new Response();
+            response.isAuthoritative = true;
+            this.responses.add(response);
+            index = parseResponse(data, index, response);
+        }
+        for(int i = 0; i < this.additionalCount; i++)
+        {
+            Response response = new Response();
+            response.isAdditional = true;
+            this.responses.add(response);
+            index = parseResponse(data, index, response);
+        }
     }
 
-    private int parseResponse(byte[] data, int index, int answerCount) throws DnsResponseException
+    private int parseResponse(byte[] data, int index, Response response) throws DnsResponseException
     {
-        if(this.responseDomainLabels.isEmpty())
-            index = getLabels(data, ++index, this.responseDomainLabels);
-        else
-            index = getLabels(data, ++index, new ArrayList<String>());
+
+        index = getLabels(data, ++index, response.name);
+
         index += 2;
-        getType(data[index]);
+        response.type = getType(data[index]);
 
         //Check class
         if(data[++index] != 0 || data[++index] != 1)
-            throw new DnsResponseException("ERROR: Query is no an IP");
+            throw new DnsResponseException("ERROR: Response class is not IN");
 
         //Check TTL
         index++;
-        this.TTl.add(readIntByte(data, index, 4));
+        response.TTL = readIntByte(data, index, 4);
         index += 4;
 
         int length = readIntByte(data, index, 2);
         index += 2;
 
 
-        switch (this.responseType)
+        switch (response.type)
         {
             case A:
-                this.ip.add(new ArrayList<>());
-                index = getIp(data, index, answerCount);
+                index = getIp(data, index, response.labels);
+                break;
+            case AAAA:
+                index = getIpv6(data, index, response.labels);
                 break;
             case MX:
-                this.mxDomainLabels.add(new ArrayList<>());
-                index = getMxInformation(data, index, answerCount);
+                index = getMxInformation(data, index, response);
                 break;
             case NS:
-                this.nsDomainLabels.add(new ArrayList<>());
-                index = getLabels(data, index, this.nsDomainLabels.get(answerCount));
+                index = getLabels(data, index, response.labels);
                 break;
             case CNAME:
-                this.cnameDomainLabels.add(new ArrayList<>());
-                index = getLabels(data, index, this.cnameDomainLabels.get(answerCount));
+                index = getLabels(data, index, response.labels);
                 break;
         }
         return index;
@@ -136,20 +146,30 @@ public class DnsResponse {
         return value;
     }
 
-    private int getIp(byte[] data, int index, int ansCount)
+    private int getIp(byte[] data, int index, List<String> ip)
     {
         for(int i = 0; i < 4; i++)
         {
-            this.ip.get(ansCount).add(String.valueOf(Byte.toUnsignedInt(data[index + i])));
+            ip.add(String.valueOf(Byte.toUnsignedInt(data[index + i])));
         }
-        return index + 4;
+        return index + 3;
     }
 
-    private int getMxInformation(byte[] data, int index, int ansCount)
+    private int getIpv6(byte[] data, int index, List<String> ip6)
     {
-        this.preference.add(readIntByte(data, index, 2));
+        for(int i = 0; i < 8; i++)
+        {
+            ip6.add(String.valueOf(readIntByte(data, index, 2)));
+            index += 2;
+        }
+        return --index;
+    }
+
+    private int getMxInformation(byte[] data, int index, Response response)
+    {
+        response.preference = readIntByte(data, index, 2);
         index += 2;
-        return getLabels(data, index, this.mxDomainLabels.get(ansCount));
+        return getLabels(data, index, response.labels);
     }
 
     private int getLabels(byte[] data, int index, List<String> labels)
@@ -180,25 +200,22 @@ public class DnsResponse {
         return index;
     }
 
-    private void getType(byte datum) throws DnsResponseException
+    private ServerType getType(byte datum) throws DnsResponseException
     {
         switch (datum)
         {
             case 1:
-                this.responseType = ServerType.A;
-                break;
+                return ServerType.A;
             case 15:
-                this.responseType = ServerType.MX;
-                break;
+                return ServerType.MX;
             case 2:
-                this.responseType = ServerType.NS;
-                break;
+                return ServerType.NS;
             case 5:
-                this.responseType = ServerType.CNAME;
-                break;
+                return ServerType.CNAME;
+            case 28:
+                return ServerType.AAAA;
             default:
-                throw new DnsResponseException("Type not accepted");
-
+                return ServerType.OTHER;
         }
     }
 
@@ -216,40 +233,32 @@ public class DnsResponse {
     {
     if( this.id != request.getId() )
         return false;
-    if( this.responseType != request.getServerType() )
+    if( this.questionType != request.getServerType() )
         return false;
-    if( !String.join(".", this.responseDomainLabels).equals(request.getDomainName()) )
-        return false;
-
     return true;
     }
 
     public String displayInformation()
     {
-        switch (this.responseType)
-        {
-            case A:
-                return joinDisplayStrings(ServerType.A.toString(), this.ip);
-            case MX:
-                return joinDisplayStrings(ServerType.MX.toString(), this.mxDomainLabels);
-            case NS:
-                return joinDisplayStrings(ServerType.NS.toString(), this.nsDomainLabels);
-            case CNAME:
-                return joinDisplayStrings(ServerType.CNAME.toString(), this.cnameDomainLabels);       }
-        return "";
-    }
-
-    private String joinDisplayStrings(String type, List<List<String>> listOfStrings)
-    {
+        List<Response> answerResponses= new ArrayList<Response>();
+        List<Response> additionalResponses= new ArrayList<Response>();
         String result = "";
-        int index = 0;
-        for (List<String> labels: listOfStrings) {
-            result += (type + " " + String.join(".", labels)
-                    + (this.responseType == ServerType.MX ? (" " + this.preference.get(index)) : "")
-                    + " " + this.TTl.get(index)
-                    + " " + (this.isAuthoritative ? "auth" : "noauth" + "\n"));
-            index++;
+        for(Response response: responses) {
+            if(!response.isAdditional)
+                answerResponses.add(response);
+            else
+                additionalResponses.add(response);
         }
+
+        result += "\n ***Answer Section (" + answerResponses.size() + " records)***\n";
+        for(Response response: answerResponses) {
+            result += response.displayInfo();
+        }
+        result += "\n ***Additional Section (" + additionalResponses.size() + " records)***\n";
+        for(Response response: additionalResponses) {
+            result += response.displayInfo();
+        }
+
         return result;
     }
 

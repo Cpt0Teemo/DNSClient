@@ -1,5 +1,3 @@
-package DnsClient;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.net.*;
@@ -48,19 +46,26 @@ class DnsClient{
 
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, request.getPort());
 
+        long startTime = System.currentTimeMillis();
         clientSocket.send(sendPacket);
 
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 
         clientSocket.receive(receivePacket);
 
-        var response = new DnsResponse(receivePacket.getData());
+        DnsResponse response = new DnsResponse(receivePacket.getData());
 
 
         if(!response.checkResponseWithRequest(request))
           throw new Exception("Response does not match request");
 
+        System.out.println();
+        long timeTaken = System.currentTimeMillis() - startTime;
+        System.out.println("Response received after " + timeTaken
+                + " milliseconds (" + (request.getMax_retries() - retries) +" retries)\n");
+
         System.out.println(response.displayInformation());
+
         clientSocket.close();
         break;
       } catch (Exception e) {
