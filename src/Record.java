@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Response {
+public class Record {
     public List<String> name;
     public ServerType type;
     public int TTL;
@@ -10,7 +10,7 @@ public class Response {
     public boolean isAuthoritative;
     public boolean isAdditional;
 
-    public Response()
+    public Record()
     {
         name = new ArrayList<>();
         type = ServerType.A;

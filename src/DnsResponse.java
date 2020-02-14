@@ -9,7 +9,7 @@ public class DnsResponse {
     private int ansCount = 0;
     private int authCount = 0;
     private int additionalCount = 0;
-    private List<Response> responses = new ArrayList<>();
+    private List<Record> respons = new ArrayList<>();
 
 
 
@@ -75,33 +75,33 @@ public class DnsResponse {
 
         for(int i = 0; i < this.ansCount; i++)
         {
-            Response response = new Response();
-            this.responses.add(response);
-            index = parseResponse(data, index, response);
+            Record record = new Record();
+            this.respons.add(record);
+            index = parseResponse(data, index, record);
         }
         for(int i = 0; i < this.authCount; i++)
         {
-            Response response = new Response();
-            response.isAuthoritative = true;
-            this.responses.add(response);
-            index = parseResponse(data, index, response);
+            Record record = new Record();
+            record.isAuthoritative = true;
+            this.respons.add(record);
+            index = parseResponse(data, index, record);
         }
         for(int i = 0; i < this.additionalCount; i++)
         {
-            Response response = new Response();
-            response.isAdditional = true;
-            this.responses.add(response);
-            index = parseResponse(data, index, response);
+            Record record = new Record();
+            record.isAdditional = true;
+            this.respons.add(record);
+            index = parseResponse(data, index, record);
         }
     }
 
-    private int parseResponse(byte[] data, int index, Response response) throws DnsResponseException
+    private int parseResponse(byte[] data, int index, Record record) throws DnsResponseException
     {
 
-        index = getLabels(data, ++index, response.name);
+        index = getLabels(data, ++index, record.name);
 
         index += 2;
-        response.type = getType(data[index]);
+        record.type = getType(data[index]);
 
         //Check class
         if(data[++index] != 0 || data[++index] != 1)
@@ -109,29 +109,29 @@ public class DnsResponse {
 
         //Check TTL
         index++;
-        response.TTL = readIntByte(data, index, 4);
+        record.TTL = readIntByte(data, index, 4);
         index += 4;
 
         int length = readIntByte(data, index, 2);
         index += 2;
 
 
-        switch (response.type)
+        switch (record.type)
         {
             case A:
-                index = getIp(data, index, response.labels);
+                index = getIp(data, index, record.labels);
                 break;
             case AAAA:
-                index = getIpv6(data, index, response.labels);
+                index = getIpv6(data, index, record.labels);
                 break;
             case MX:
-                index = getMxInformation(data, index, response);
+                index = getMxInformation(data, index, record);
                 break;
             case NS:
-                index = getLabels(data, index, response.labels);
+                index = getLabels(data, index, record.labels);
                 break;
             case CNAME:
-                index = getLabels(data, index, response.labels);
+                index = getLabels(data, index, record.labels);
                 break;
         }
         return index;
@@ -166,11 +166,11 @@ public class DnsResponse {
         return --index;
     }
 
-    private int getMxInformation(byte[] data, int index, Response response)
+    private int getMxInformation(byte[] data, int index, Record record)
     {
-        response.preference = readIntByte(data, index, 2);
+        record.preference = readIntByte(data, index, 2);
         index += 2;
-        return getLabels(data, index, response.labels);
+        return getLabels(data, index, record.labels);
     }
 
     private int getLabels(byte[] data, int index, List<String> labels)
@@ -241,23 +241,23 @@ public class DnsResponse {
 
     public String displayInformation()
     {
-        List<Response> answerResponses= new ArrayList<Response>();
-        List<Response> additionalResponses= new ArrayList<Response>();
+        List<Record> answerRespons = new ArrayList<Record>();
+        List<Record> additionalRespons = new ArrayList<Record>();
         String result = "";
-        for(Response response: responses) {
-            if(!response.isAdditional)
-                answerResponses.add(response);
+        for(Record record : respons) {
+            if(!record.isAdditional)
+                answerRespons.add(record);
             else
-                additionalResponses.add(response);
+                additionalRespons.add(record);
         }
 
-        result += "\n ***Answer Section (" + answerResponses.size() + " records)***\n";
-        for(Response response: answerResponses) {
-            result += response.displayInfo();
+        result += "\n ***Answer Section (" + answerRespons.size() + " records)***\n";
+        for(Record record : answerRespons) {
+            result += record.displayInfo();
         }
-        result += "\n ***Additional Section (" + additionalResponses.size() + " records)***\n";
-        for(Response response: additionalResponses) {
-            result += response.displayInfo();
+        result += "\n ***Additional Section (" + additionalRespons.size() + " records)***\n";
+        for(Record record : additionalRespons) {
+            result += record.displayInfo();
         }
 
         return result;
