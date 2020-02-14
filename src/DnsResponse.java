@@ -236,6 +236,8 @@ public class DnsResponse {
         return false;
     if( this.questionType != request.getServerType() )
         return false;
+    if ( !String.join(".", this.labels).equals(request.getDomainName()))
+        return false;
     return true;
     }
 
