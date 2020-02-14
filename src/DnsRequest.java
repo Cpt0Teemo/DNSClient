@@ -175,7 +175,6 @@ class DnsRequest
   private DataOutputStream addDnsBody(DataOutputStream dos) throws Exception
   {
     //Add domain name
-    //TODO think of offset
     String[] labels = this.domainName.split("\\.");
     for (String label: labels)
     {
