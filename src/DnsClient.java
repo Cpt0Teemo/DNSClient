@@ -36,7 +36,7 @@ class DnsClient{
       return;
     }
 
-    var retries = request.getMax_retries();
+    int retries = request.getMax_retries();
     while(retries > 0)
     {
       try {

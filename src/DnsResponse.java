@@ -28,8 +28,9 @@ public class DnsResponse {
         if(checkBitAtPosition(6 ,data[2]))
             this.isAuthoritative = true;
         //Check is serve handles recursive queries
-        //if(!checkBitAtPosition(1 ,data[3]))
-            //throw new DnsResponseException("ERROR: Server does not handle recursive calls");
+        if(!checkBitAtPosition(1 ,data[3]))
+            //We don't want this flag to stop the parsing
+            System.out.println("ERROR: Server does not handle recursive calls");
         //Check response status code
         int response = data[3] & 8;
         if(response != 0)
@@ -63,7 +64,7 @@ public class DnsResponse {
 
     private void parseData(byte[] data) throws DnsResponseException
     {
-        var index = 12;
+        int index = 12;
         index = getLabels(data, index, this.labels);
         //Check type
         index += 2;
